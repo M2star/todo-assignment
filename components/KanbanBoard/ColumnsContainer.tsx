@@ -18,10 +18,11 @@ type Props = {
   tasks: Tasks[];
   handleEdit: (id: number | string) => void;
   handleRemoveTask: (id: number | string) => void;
+  isSubmitting: boolean;
 };
 
 const ColumnsContainer = (props: Props) => {
-  const { columns, tasks, id, handleEdit, handleRemoveTask } = props;
+  const { columns, tasks, id, handleEdit, handleRemoveTask, isSubmitting } = props;
   const taskId = useMemo(() => tasks.map((task) => task.id), [tasks]);
 
   const { setNodeRef } = useDroppable({
@@ -51,6 +52,7 @@ const ColumnsContainer = (props: Props) => {
               handleRemoveTask={handleRemoveTask}
               key={`${task.id}_${idx}`}
               task={task}
+              isSubmitting={isSubmitting}
             />
           ))}
         </SortableContext>

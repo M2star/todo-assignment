@@ -1,20 +1,20 @@
-import React, { useState } from "react";
+import React from "react";
 import { Tasks } from "./types";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { MdDeleteForever, MdEdit } from "react-icons/md";
 import { Button } from "../ui/button";
-import { Textarea } from "../ui/textarea";
 
 interface Props {
   task: Tasks;
   handleRemoveTask: (id: number | string) => void;
   handleEdit: (id: number | string) => void;
+  isSubmitting: boolean;
 }
 
 const TaskCard = (props: Props) => {
-  const { task, handleRemoveTask, handleEdit } = props;
-  const [isEdit, setIsEdit] = useState<boolean>(false);
+  const { task, handleRemoveTask, handleEdit, isSubmitting } = props;
+
   const {
     transform,
     transition,
@@ -28,7 +28,7 @@ const TaskCard = (props: Props) => {
       type: "Task",
       task,
     },
-    disabled: isEdit,
+    disabled: false,
   });
 
   const style = {
@@ -44,11 +44,11 @@ const TaskCard = (props: Props) => {
       {...listeners}
       className="bg-background group break-words w-full p-2.5 h-[100px] min-h-[100px] text-left flex items-center rounded-xl hover:ring-2 hover:ring-inset hover:ring-orange-300 cursor-grab relative"
     >
-    <div className="flex-1">
-      <p className="text-sm text-gray-500">id:{task.id}</p>
-      <p className="text-base font-semibold">{task.title}</p>
-      <p  className="text-sm text-gray-500">{task.description}</p>
-    </div>
+      <div className="flex-1">
+        <p className="text-sm text-gray-500">id:{task.id}</p>
+        <p className="text-base font-semibold">{task.title}</p>
+        <p className="text-sm text-gray-500">{task.description}</p>
+      </div>
       <div className="flex flex-col">
         <Button
           onClick={(e) => {
@@ -62,7 +62,8 @@ const TaskCard = (props: Props) => {
           onClick={(e) => {
             handleRemoveTask(task.id);
           }}
-          className="w-12 cursor-pointer bg-red-100 h-full rounded-t-none   items-center rounded-br-2xl rounded-l-none text-xl text-red-600 justify-center  "
+          className="w-12 cursor-pointer hover:bg-red-300 bg-red-200 h-full rounded-t-none   items-center rounded-br-2xl rounded-l-none text-xl text-red-600 justify-center  "
+          disabled={isSubmitting}
         >
           <MdDeleteForever />
         </Button>

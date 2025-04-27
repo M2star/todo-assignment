@@ -1,5 +1,5 @@
 "use client";
-import React, { act, useEffect, useMemo, useState } from "react";
+import React, { act, use, useEffect, useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { genrateId } from "@/utils/genrateId";
 import { Columns, Tasks } from "./types";
@@ -40,11 +40,13 @@ import { toast } from "sonner";
 
 const KanbanBoard = () => {
   // const [columns, setColumns] = useState<Columns[]>([]);
-  const [isMount, setIsMount] = useState<Boolean>(false);
+  const [isMount, setIsMount] = useState<boolean>(false);
   const [activeTasks, setActiveTasks] = useState<Tasks | null>(null);
   const [tasks, setTasks] = useState<Tasks[]>([]);
   const [isFrom, setIsFrom] = useState<boolean>(false);
   const [editId, setEditId] = useState<number | string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [formData, setFormData] = useState({
     title: "",
     status: "todo",
@@ -58,9 +60,10 @@ const KanbanBoard = () => {
       },
     })
   );
-  
+
   const syncTasks = async () => {
     try {
+      setIsLoading(true);
       const resp = await getTasks();
       if (resp.status === 200) {
         const modifiedTasks = resp.data.map((task: Tasks, index: number) => ({
@@ -69,21 +72,26 @@ const KanbanBoard = () => {
           order: index,
         }));
         setTasks(modifiedTasks);
-      }else{
+      } else {
         toast("Failed to fetch", {
-          description: resp.data?.message || resp.data.error || "Something went wrong, please try again later."
-        })
+          description:
+            resp.data?.message ||
+            resp.data.error ||
+            "Something went wrong, please try again later.",
+        });
       }
     } catch (error) {
       toast("Failed to fetch", {
-        description:"Something went wrong, please try again later.",
-      })
+        description: "Something went wrong, please try again later.",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-
   const handleCreateTask = async () => {
     try {
+      setIsSubmitting(true);
       const newTask: Tasks = {
         id: tasks.length + 1,
         completed: formData.status === "done" ? true : false,
@@ -94,37 +102,49 @@ const KanbanBoard = () => {
       if (resp.status === 201) {
         setTasks((prev) => [newTask, ...prev]);
         setIsFrom(false);
-      }else{
+      } else {
         toast("Failed to create task", {
-          description: resp.data?.message || resp.data?.error  ||"Something went wrong, please try again later.",
-        })
+          description:
+            resp.data?.message ||
+            resp.data?.error ||
+            "Something went wrong, please try again later.",
+        });
       }
     } catch (error) {
       toast("Failed to create task", {
-        description:"Something went wrong, please try again later.",
-      })
+        description: "Something went wrong, please try again later.",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleRemoveTask = async (id: Tasks["id"]) => {
     try {
+      setIsSubmitting(true);
       const resp = await deleteTask(id);
       if (resp.status === 200) {
         setTasks((prev) => prev.filter((task) => task.id !== id));
-      }else{
+      } else {
         toast("Failed to deleted task", {
-          description: resp.data?.message || resp.data?.error  ||"Something went wrong, please try again later.",
-        })
+          description:
+            resp.data?.message ||
+            resp.data?.error ||
+            "Something went wrong, please try again later.",
+        });
       }
     } catch (error) {
       toast("Failed to delete task", {
-        description:"Something went wrong, please try again later.",
-      })
+        description: "Something went wrong, please try again later.",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleUpdateTask = async () => {
     try {
+      setIsSubmitting(true);
       const body = {
         id: editId,
         completed: formData.status === "done" ? true : false,
@@ -138,19 +158,22 @@ const KanbanBoard = () => {
         );
         setIsFrom(false);
         setEditId("");
-      }else{
+      } else {
         toast("Failed to update task", {
-          description: resp.data?.message || resp.data?.error  ||"Something went wrong, please try again later.",
-        })
+          description:
+            resp.data?.message ||
+            resp.data?.error ||
+            "Something went wrong, please try again later.",
+        });
       }
     } catch (error) {
       toast("Failed to update", {
-        description:"Something went wrong, please try again later.",
-      })
+        description: "Something went wrong, please try again later.",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
-
- 
 
   const columns = useMemo(() => {
     return initialBoard(tasks);
@@ -174,10 +197,9 @@ const KanbanBoard = () => {
   };
 
   const handleClose = () => {
-    setIsFrom(prev => !prev);
+    setIsFrom((prev) => !prev);
     setEditId("");
-  }
-
+  };
 
   const onDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -214,6 +236,14 @@ const KanbanBoard = () => {
     syncTasks();
     setIsMount(true);
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p className="text-2xl font-bold">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen p-10 ">
@@ -271,8 +301,18 @@ const KanbanBoard = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <Button className="w-full" onClick={() => (editId ? handleUpdateTask() : handleCreateTask())}>
-                {editId ? "Update Task" : "Create Task"}
+              <Button
+                className="w-full"
+                onClick={() =>
+                  editId ? handleUpdateTask() : handleCreateTask()
+                }
+                disabled={isSubmitting}
+              >
+                {isSubmitting
+                  ? "Loading..."
+                  : editId
+                  ? "Update Task"
+                  : "Create Task"}
               </Button>
             </div>
           </DialogContent>
@@ -294,6 +334,7 @@ const KanbanBoard = () => {
                   tasks={tasks.filter((task) => task.status === column.id)}
                   handleRemoveTask={handleRemoveTask}
                   handleEdit={handleEdit}
+                  isSubmitting={isSubmitting}
                 />
               ))}
             </div>
@@ -305,6 +346,7 @@ const KanbanBoard = () => {
                     handleEdit={handleEdit}
                     handleRemoveTask={handleRemoveTask}
                     task={activeTasks}
+                    isSubmitting={isSubmitting}
                   />,
                   document.body
                 )}
