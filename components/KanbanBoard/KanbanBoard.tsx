@@ -36,6 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
 
 const KanbanBoard = () => {
   // const [columns, setColumns] = useState<Columns[]>([]);
@@ -68,9 +69,15 @@ const KanbanBoard = () => {
           order: index,
         }));
         setTasks(modifiedTasks);
+      }else{
+        toast("Failed to fetch", {
+          description: resp.data?.message || resp.data.error || "Something went wrong, please try again later."
+        })
       }
     } catch (error) {
-      console.log(error);
+      toast("Failed to fetch", {
+        description:"Something went wrong, please try again later.",
+      })
     }
   };
 
@@ -87,9 +94,15 @@ const KanbanBoard = () => {
       if (resp.status === 201) {
         setTasks((prev) => [newTask, ...prev]);
         setIsFrom(false);
+      }else{
+        toast("Failed to create task", {
+          description: resp.data?.message || resp.data?.error  ||"Something went wrong, please try again later.",
+        })
       }
     } catch (error) {
-      console.log(error);
+      toast("Failed to create task", {
+        description:"Something went wrong, please try again later.",
+      })
     }
   };
 
@@ -98,9 +111,15 @@ const KanbanBoard = () => {
       const resp = await deleteTask(id);
       if (resp.status === 200) {
         setTasks((prev) => prev.filter((task) => task.id !== id));
+      }else{
+        toast("Failed to deleted task", {
+          description: resp.data?.message || resp.data?.error  ||"Something went wrong, please try again later.",
+        })
       }
     } catch (error) {
-      console.log(error);
+      toast("Failed to delete task", {
+        description:"Something went wrong, please try again later.",
+      })
     }
   };
 
@@ -119,9 +138,15 @@ const KanbanBoard = () => {
         );
         setIsFrom(false);
         setEditId("");
+      }else{
+        toast("Failed to update task", {
+          description: resp.data?.message || resp.data?.error  ||"Something went wrong, please try again later.",
+        })
       }
     } catch (error) {
-      console.log(error);
+      toast("Failed to update", {
+        description:"Something went wrong, please try again later.",
+      })
     }
   };
 
